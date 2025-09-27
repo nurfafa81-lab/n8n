@@ -1,0 +1,408 @@
+{
+  "name": "Ai slide ✅ cop",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "Upload File to PDF.co",
+        "binaryData": true,
+        "binaryPropertyName": "pdf",
+        "name": "={{\n  (Object.values($node[\"Fillout Trigger\"].json.questions)\n    .find(q => q?.value?.[0]?.filename))?.value?.[0]?.filename || 'resume.pdf'\n}}\n"
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        3120
+      ],
+      "id": "ff4be38e-9ba3-4c58-b873-61969807f662",
+      "name": "Upload PDF",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "vhitC0RqmRGiyoFR",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "Convert from PDF",
+        "url": "={{$node[\"Upload PDF\"].json[\"url\"]}}",
+        "advancedOptions": {}
+      },
+      "type": "n8n-nodes-pdfco.PDFco Api",
+      "typeVersion": 1,
+      "position": [
+        3168,
+        3120
+      ],
+      "id": "9ae1c2c0-db5b-4e42-9e0c-a918d4f24fa9",
+      "name": "Convert/Extract from PDF",
+      "credentials": {
+        "pdfcoApi": {
+          "id": "vhitC0RqmRGiyoFR",
+          "name": "PDF.co account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2ed52c71-1f98-4b33-afd3-e5f371d89715",
+              "name": "pdfText",
+              "value": "={{ \n  (\n    $json.body || $json.text || $node[\"Convert/Extract from PDF\"].json.body || \"\"\n  )\n  .replace(/\\r/g,\"\")\n  .replace(/[ \\t]+\\n/g,\"\\n\")\n  .trim()\n  .slice(0,5000)     // จำกัดความยาวกันยาวเกิน\n}}",
+              "type": "string"
+            },
+            {
+              "id": "8b7e5410-0816-48fd-a2e7-11d72217d7d7",
+              "name": "name",
+              "value": "={{ $('Fillout Trigger').item.json.questions['3iYA'].value }}",
+              "type": "string"
+            },
+            {
+              "id": "f80aa6cd-0101-4f3f-8c67-fbc6e33908ca",
+              "name": "email",
+              "value": "={{ $('Fillout Trigger').item.json.questions.pRi4.value }}",
+              "type": "string"
+            },
+            {
+              "id": "7b6dda29-e99f-4d07-9dfb-08ae55625db9",
+              "name": "position",
+              "value": "={{ $('Fillout Trigger').item.json.questions['1Ran'].value }}",
+              "type": "string"
+            },
+            {
+              "id": "6c3071db-8d82-45f4-bbc3-2e45afad4ca8",
+              "name": "years_exp",
+              "value": "={{ $('Fillout Trigger').item.json.questions['6zS8'].value }}",
+              "type": "number"
+            },
+            {
+              "id": "157201ca-53ab-4156-95b0-08c4d949b356",
+              "name": "education",
+              "value": "={{ $('Fillout Trigger').item.json.questions.auoa.value }}",
+              "type": "string"
+            },
+            {
+              "id": "27260fc4-cfe2-4321-b615-fc0c9a91c416",
+              "name": "threshold",
+              "value": "={{ Number($node[\"Fillout Trigger\"].json.questions.threshold?.value || 70) }}",
+              "type": "string"
+            },
+            {
+              "id": "ab59644b-8e17-4d57-a356-a883bca389fe",
+              "name": "skill",
+              "value": "={{ $('Fillout Trigger').item.json.questions.gzp6.value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3424,
+        3120
+      ],
+      "id": "757ddeed-d211-422f-8e60-fbf119fd9058",
+      "name": "Prepare Text from PDF"
+    },
+    {
+      "parameters": {
+        "form": "mu9xZDUPY5us"
+      },
+      "type": "n8n-nodes-fillout.filloutTrigger",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        3120
+      ],
+      "id": "ec619922-73b9-4085-92be-7ea6b0d8e6eb",
+      "name": "Fillout Trigger",
+      "webhookId": "0179b3e6-cbb9-4f59-955e-ac4143452743",
+      "credentials": {
+        "filloutApi": {
+          "id": "rvmWtCXlLlgKI3DR",
+          "name": "Fillout account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n  (Object.values($node[\"Fillout Trigger\"].json.questions)\n   .find(q => q?.value?.[0]?.url))?.value?.[0]?.url || ''\n}}\n",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2576,
+        3120
+      ],
+      "id": "f1084561-cfa3-4288-b973-b698fe67f7d9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=งาน: ประเมินผู้สมัครและให้คะแนน 0–100 ตามเกณฑ์ด้านล่าง แล้วตัดสิน pass/fail ตาม threshold\n\nข้อมูลตำแหน่ง: {{ $json.position }}\nข้อมูลผู้สมัคร:\n- ชื่อ: {{ $json.name }}\n- อีเมล: {{ $json.email }}\n- ประสบการณ์ (ปี): {{ $json.years_exp }}\n- การศึกษา: {{ $json.education }}\n\nเรซูเม่ (ข้อความ): {{ $json.pdfText }}\n\n\nหลักเกณฑ์การคิดคะแนน:\n- ทักษะที่เกี่ยวข้องกับตำแหน่งจากเรซูเม่ (40%)\n- ประสบการณ์ทำงานเชิงคุณภาพและความเกี่ยวข้อง (40%)\n- การศึกษา/วุฒิ/ใบรับรองที่ตรง (10%)\n- ความชัดเจน/การสื่อสารจากเนื้อหาเรซูเม่ (10%)\n\nกติกา:\n- threshold = {{ $json.threshold }}%\n- ให้คะแนนเป็นจำนวนเต็ม 0–100 ในฟิลด์ score_percent เท่านั้น\n- verdict = \"pass\" ถ้า score_percent >= threshold, ไม่เช่นนั้น \"fail\"\n- reasons เป็น bullet สั้น 2–5 ข้อ (ภาษาไทย)\n- ถ้าข้อมูลขาด ให้ใส่ใน reasons และหักคะแนนอย่างเหมาะสม\n- ส่งกลับเป็น **JSON ล้วน** ตรงตามสคีมาเท่านั้น ห้ามมีข้อความอื่น\n\nสคีมาที่ต้องส่งกลับ (ตัวอย่างโครง):\n{\"score_percent\": 0, \"verdict\": \"pass|fail\", \"reasons\": [\"...\"]}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        3632,
+        3120
+      ],
+      "id": "d74809f3-ba83-494d-99c4-6e2d83f20455",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3504,
+        3328
+      ],
+      "id": "41d29164-c879-4270-a4c3-1b23e49d7d06",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "xGrmhOvp02rE8f5H",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// รับข้อความผลลัพธ์จากหลายรูปแบบของโหนด AI\nlet text =\n  $json?.candidates?.[0]?.content?.parts?.[0]?.text ??\n  $json?.output ??              // AI Agent ของ n8n ชอบใส่ไว้ตรงนี้\n  $json?.text ??\n  '';\n\nif (typeof text !== 'string') text = JSON.stringify(text);\ntext = text.trim();\n\n// ลอก code fences / คำว่า \"json\" ที่ชอบติดมาหน้า-หลัง\ntext = text\n  .replace(/^```(?:json)?\\s*/i, '')\n  .replace(/```$/,'')\n  .replace(/^json\\s*/i, '');\n\n// พยายาม parse ให้สุดทาง\nlet obj;\ntry {\n  obj = JSON.parse(text);\n} catch {\n  // ตัดเฉพาะช่วง { ... } ที่ยาวสุด\n  const start = text.indexOf('{');\n  const end   = text.lastIndexOf('}');\n  if (start !== -1 && end > start) {\n    const slice = text.slice(start, end + 1);\n    try { obj = JSON.parse(slice); } catch {}\n  }\n  // แก้เคสมี comma เกิน\n  if (!obj) {\n    const fixed = text.replace(/,\\s*([}\\]])/g, '$1');\n    try { obj = JSON.parse(fixed); } catch {}\n  }\n}\n\n// บังคับให้ข้อมูลพร้อมใช้งาน\nconst threshold = Number($node[\"Prepare Text from PDF\"].json.threshold || 70);\n\nif (obj && typeof obj.score_percent === 'string') {\n  const n = Number(obj.score_percent);\n  if (!Number.isNaN(n)) obj.score_percent = n;\n}\n\nif (!obj || typeof obj.score_percent !== 'number') {\n  return [{ score_percent: 0, verdict: \"fail\", reasons: [\"Invalid JSON from Gemini\"], raw: text }];\n}\n\nif (!obj.verdict) {\n  obj.verdict = obj.score_percent >= threshold ? \"pass\" : \"fail\";\n}\nif (!Array.isArray(obj.reasons)) {\n  obj.reasons = [String(obj.reasons ?? \"No reasons provided\")];\n}\n\nreturn [obj];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3984,
+        3120
+      ],
+      "id": "56399078-6a93-4dc7-a326-ac24dd66f15f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cd4c553e-1322-47a7-b2f9-e3638f07a7c9",
+              "leftValue": "={{ Number($json.score_percent ?? 0) }}",
+              "rightValue": "={{ Number($node[\"Prepare Text from PDF\"].json.threshold || 70) }}\n",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4192,
+        3120
+      ],
+      "id": "53b844a2-ef35-4338-845a-3087b260f880",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fromEmail": "nurfafa81@gmail.com",
+        "toEmail": "={{$node[\"Prepare Text from PDF\"].json.email}}",
+        "subject": "=ผลประเมินเบื้องต้น: ผ่านสัมภาษณ์ – {{$node[\"Prepare Text from PDF\"].json.position}}",
+        "emailFormat": "text",
+        "text": "=สวัสดีคุณ {{$node[\"Prepare Text from PDF\"].json.name}},\n\nคะแนนประเมินเบื้องต้น: {{$json.score_percent}}%\nคุณผ่านเกณฑ์ (≥ {{ $node[\"Prepare Text from PDF\"].json.threshold }}%)\n\nเหตุผลสรุป:\n- {{ $json.reasons.join('\\n- ') }}\n\nยินดีเชิญเข้าสัมภาษณ์ต่อ โปรดตอบกลับอีเมลนี้เพื่อยืนยันช่วงเวลาที่สะดวก\nทีมสรรหา\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        4400,
+        3028.879047599423
+      ],
+      "id": "b89dca69-604f-4200-8282-4e66db62828b",
+      "name": "Send email",
+      "webhookId": "bf69081b-52fb-40ca-b939-7792d28062c7",
+      "credentials": {
+        "smtp": {
+          "id": "VfN1JR3xjKHXM7Fg",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "nurfafa81@gmail.com",
+        "toEmail": "={{$node[\"Prepare Text from PDF\"].json.email}}",
+        "subject": "=ผลประเมินเบื้องต้น: ไม่ผ่าน – {{$node[\"Prepare Text from PDF\"].json.position}}",
+        "emailFormat": "text",
+        "text": "=สวัสดีคุณ {{$node[\"Prepare Text from PDF\"].json.name}},\n\nคะแนนประเมินเบื้องต้น: {{$json.score_percent}}%\nซึ่งต่ำกว่าเกณฑ์ {{ $node[\"Prepare Text from PDF\"].json.threshold }}%\n\nเหตุผลสรุป:\n- {{ $json.reasons.join('\\n- ') }}\n\nขอบคุณที่สนใจสมัคร สามารถสมัครใหม่ได้ในอนาคตครับ/ค่ะ\nทีมสรรหา\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        4400,
+        3216
+      ],
+      "id": "f119bcd9-3447-45bb-993c-cb156f29963c",
+      "name": "Send email1",
+      "webhookId": "28099549-e5c3-4b21-be3b-cfa8bec559f2",
+      "credentials": {
+        "smtp": {
+          "id": "VfN1JR3xjKHXM7Fg",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Upload PDF": {
+      "main": [
+        [
+          {
+            "node": "Convert/Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert/Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "Prepare Text from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Text from PDF": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fillout Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Upload PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "RsMw7RYS1sNJ6A7l"
+  },
+  "versionId": "bba4bddf-1a8d-4371-886e-6b6f9752a110",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b3a12b36934727a8a31866efa9b209194aa751b30eaf7c6ec6287ebce4e870c8"
+  },
+  "id": "kAqf3elxCO4LjCx7",
+  "tags": []
+}
